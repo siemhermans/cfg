@@ -1,0 +1,5 @@
+[user]
+	email = siem.hermans@gmail.com
+	name = Siem Hermans
+[push]
+	default = simple

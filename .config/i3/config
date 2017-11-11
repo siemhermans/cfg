@@ -1,0 +1,268 @@
+# i3 config file (v4)
+
+### Define variables ###
+set $bgcolor    #231F20
+set $focused    #231F20
+set $fgcolor    #F2F2F2
+set $work_sel   #F2F2F2
+set $work_inac  #757072
+
+# workspaces
+set $workspace1 "1 "
+set $workspace2 "2 "
+set $workspace3 "3 "
+set $workspace4 "4 "
+set $workspace5 "5 "
+set $workspace6 "6 "
+set $workspace7 "7 "
+set $workspace8 "8 "
+set $workspace9 "9 "
+set $workspace10 "10 "
+
+# general configuration
+set $mod Mod4
+font pango:Anonymous Pro for Powerline 10
+floating_modifier $mod
+for_window [class="^.*"] border pixel 1
+hide_edge_borders both
+
+# start a terminal
+bindsym $mod+Return exec urxvt
+
+# kill focused window
+bindsym $mod+Shift+q kill
+
+# start rofi (a program launcher)
+bindsym $mod+d exec --no-startup-id rofi -show run
+bindsym $mod+c exec --no-startup-id rofi -show window
+
+# change focus
+bindsym $mod+j focus left
+bindsym $mod+k focus down
+bindsym $mod+l focus up
+bindsym $mod+semicolon focus right
+
+# alternatively, you can use the cursor keys:
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+# move focused window
+bindsym $mod+Shift+j move left
+bindsym $mod+Shift+k move down
+bindsym $mod+Shift+l move up
+bindsym $mod+Shift+semicolon move right
+
+# alternatively, you can use the cursor keys:
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
+
+# split in horizontal orientation
+bindsym $mod+h split h
+
+# split in vertical orientation
+bindsym $mod+v split v
+
+# enter fullscreen mode for the focused container
+bindsym $mod+f fullscreen toggle
+
+# change container layout (stacked, tabbed, toggle split)
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
+
+# toggle tiling / floating
+bindsym $mod+Shift+space floating toggle
+
+# change focus between tiling / floating windows
+bindsym $mod+space focus mode_toggle
+
+# focus the parent container
+bindsym $mod+a focus parent
+
+# focus the child container
+#bindsym $mod+d focus child
+
+# switch to workspace
+bindsym $mod+1 workspace $workspace1
+bindsym $mod+2 workspace $workspace2
+bindsym $mod+3 workspace $workspace3
+bindsym $mod+4 workspace $workspace4
+bindsym $mod+5 workspace $workspace5
+bindsym $mod+6 workspace $workspace6
+bindsym $mod+7 workspace $workspace7
+bindsym $mod+8 workspace $workspace8
+bindsym $mod+9 workspace $workspace9
+bindsym $mod+0 workspace $workspace10
+
+# move focused container to workspace
+bindsym $mod+Shift+1 move container to workspace $workspace1
+bindsym $mod+Shift+2 move container to workspace $workspace2
+bindsym $mod+Shift+3 move container to workspace $workspace3
+bindsym $mod+Shift+4 move container to workspace $workspace4
+bindsym $mod+Shift+5 move container to workspace $workspace5
+bindsym $mod+Shift+6 move container to workspace $workspace6
+bindsym $mod+Shift+7 move container to workspace $workspace7
+bindsym $mod+Shift+8 move container to workspace $workspace8
+bindsym $mod+Shift+9 move container to workspace $workspace9
+bindsym $mod+Shift+0 move container to workspace $workspace10
+
+# assign containers to workspaces
+assign [class="Firefox"] $workspace1
+# assign [class="google-chrome"] $workspace1
+for_window [class="Google-chrome"] move to workspace $workspace1
+assign [class="URxvt"] $workspace2
+assign [class="File-roller"] $workspace4
+assign [class="Nautilus"] $workspace4
+assign [class="Wireshark"] $workspace5
+assign [class="Foxit Reader"] $workspace6
+assign [class="VirtualBox"] $workspace8
+assign [class="Thunderbird"] $workspace9
+for_window [class="Wfica"] move to workspace $workspace7
+for_window [class="Spotify"] move to workspace $workspace10
+
+# assign floating properties
+for_window [window_role="pop-up"] floating enable
+for_window [window_role="task_dialog"] floating enable
+
+# move windows to another monitor
+bindsym $mod+Control+Up move workspace to output up
+bindsym $mod+Control+Down move workspace to output down
+bindsym $mod+Control+Left move workspace to output left
+bindsym $mod+Control+Right move workspace to output right
+
+# jump to urgent window
+bindsym $mod+x [urgent=latest] focus
+
+# automated screenshots
+bindsym --release Print exec --no-startup-id scrot -s '%Y-%m-%d-%s_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
+bindsym --release Shift+Print exec --no-startup-id  scrot '%Y-%m-%d-%s_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
+
+# reload the configuration file
+bindsym $mod+Shift+c reload
+
+# restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
+bindsym $mod+Shift+r restart
+
+# (auto)locking the session
+set $Locker exec --no-startup-id $XDG_CONFIG_HOME/scripts/lock.sh
+bindsym $mod+Shift+x $Locker
+
+# session control
+set $mode_system System (l) lock, (e) logout, (s) suspend, (r) reboot, (Shift+s) shutdown
+mode "$mode_system" {
+        bindsym l $Locker, mode "default"
+        bindsym e exec --no-startup-id i3-msg exit, mode "default"
+        bindsym s exec --no-startup-id systemctl suspend, mode "default"
+        bindsym r exec --no-startup-id systemctl reboot, mode "default"
+        bindsym Shift+s exec --no-startup-id systemctl poweroff -i, mode "default"
+
+        # back to normal: Enter or Escape
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+
+bindsym XF86PowerOff mode "$mode_system"
+
+# resize window (you can also use the mouse for that)
+mode "resize" {
+        bindsym j resize shrink width 10 px or 10 ppt
+        bindsym k resize grow height 10 px or 10 ppt
+        bindsym l resize shrink height 10 px or 10 ppt
+        bindsym semicolon resize grow width 10 px or 10 ppt
+
+        # same bindings, but for the arrow keys
+        bindsym Left resize shrink width 10 px or 10 ppt
+        bindsym Down resize grow height 10 px or 10 ppt
+        bindsym Up resize shrink height 10 px or 10 ppt
+        bindsym Right resize grow width 10 px or 10 ppt
+
+        # back to normal: Enter or Escape
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+
+bindsym $mod+r mode "resize"
+
+# Manual management of external displays
+set $mode_display External Screen: (v) DP1 On, (x) DP1 Off, (h) HDMI ON, (y) HDMI OFF, (m) Mirror output
+mode "$mode_display" {
+    bindsym v exec --no-startup-id xrandr --output DP1 --auto --right-of eDP1, mode "default"
+    bindsym h exec --no-startup-id xrandr --output HDMI1 --auto --right-of eDP1, mode "default"
+    bindsym x exec --no-startup-id xrandr --output DP1 --auto --off, mode "default"
+    bindsym y exec --no-startup-id xrandr --output HDMI1 --auto --off, mode "default"
+    bindsym m exec --no-startup-id xrandr --output eDP1 --auto --output HDMI1 --output VGA1 --auto --same-as eDP1, mode "default"
+
+    # back to normal: Enter or Escape
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+bindsym XF86Search mode "$mode_display"
+
+bar {
+        font pango: Roboto Mono Medium for Powerline 10
+        status_command i3blocks -c $XDG_CONFIG_HOME/i3/i3blocks.conf
+        position top
+        tray_padding 3
+
+        colors{
+                background $bgcolor
+                statusline $fgcolor
+
+#               color class         border    background text
+                focused_workspace   $focused $focused   $work_sel
+                inactive_workspace  $bgcolor $bgcolor   $work_inac
+        }
+}
+
+# change volume or toggle mute
+bindsym XF86AudioRaiseVolume exec --no-startup-id amixer -q -D pulse sset Master 5%+ && pkill -RTMIN+1 i3blocks
+bindsym XF86AudioLowerVolume exec --no-startup-id amixer -q -D pulse sset Master 5%- && pkill -RTMIN+1 i3blocks
+bindsym XF86AudioMute exec --no-startup-id amixer -q -D pulse sset Master toggle && pkill -RTMIN+1 i3blocks
+
+# Media player controls
+bindsym XF86AudioPlay exec playerctl play-pause # used for shared play/pause buttons
+#bindsym XF86AudioPause exex playerctl play
+#bindsym XF86AudioPause exec playerctl pause
+bindsym XF86AudioNext exec playerctl next
+bindsym XF86AudioPrev exec playerctl previous
+
+# Sreen brightness controls
+bindsym XF86MonBrightnessUp exec xbacklight -inc 20 # increase screen brightness
+bindsym XF86MonBrightnessDown exec xbacklight -dec 20 # decrease screen brightness
+
+# Touchpad controls
+# bindsym XF86TouchpadToggle exec $XDG_CONFIG_HOME/scripts/toggletouchpad.sh # toggle touchpad
+bindsym KP_Add exec $XDG_CONFIG_HOME/scripts/toggletouchpad.sh # toggle touchpad due to lack of XF86TouchpadToggle
+
+# Set wallpaper
+exec_always --no-startup-id feh --no-fehbg --bg-scale $XDG_DATA_HOME/assets/wallpaper.jpg
+
+# Start session applications
+exec --no-startup-id compton -f -D 2
+exec_always --no-startup-id xautolock -time 5 -locker $XDG_CONFIG_HOME/scripts/lock.sh
+
+# restore workspace layout
+bindsym $mod+g exec $XDG_CONFIG_HOME/scripts/load_layout.sh
+
+# Start daemons
+exec --no-startup-id nm-applet
+exec --no-startup-id solaar
+exec --no-startup-id syncthing-gtk -m
+exec --no-startup-id hp-systray
+exec --no-startup-id redshift-gtk -c $XDG_CONFIG_HOME/redshift/redshift.conf
+exec --no-startup-id davmail
+exec --no-startup-id keepassxc ~/Documents/Crypto/safeguard.kdbx
+
+# Start default applications
+exec firefox
+exec thunderbird
+#exec VBoxManage startvm "Surrogate"
+exec spotify
+exec $XDG_CONFIG_HOME/scripts/load_layout.sh # Create terminal workspace
+
+#EOF

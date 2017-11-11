@@ -1,0 +1,139 @@
+!-------------------------------------------------------------------------------
+! Xft settings
+!-------------------------------------------------------------------------------
+
+Xft.dpi:                    96
+Xft.antialias:              true
+Xft.rgba:                   rgb
+Xft.hinting:                true
+Xft.hintstyle:              hintslight
+
+!-------------------------------------------------------------------------------
+! URxvt settings
+!-------------------------------------------------------------------------------
+
+URxvt.depth:                32
+URxvt.geometry:             90x30
+URxvt.transparent:          false
+URxvt.fading:               0
+URxvt.loginShell:           false
+URxvt.saveLines:            99999
+URxvt.internalBorder:       0
+URxvt.lineSpace:            0
+
+! Fonts
+URxvt.allow_bold:           true
+URxvt.font:                 xft:Fantasque Sans Mono:style=Regular:pixelsize=13
+URxvt.boldFont:             xft:Fantasque Sans Mono:style=Bold:pixelsize=13
+URxvt.italicFont:           xft:Fantasque Sans Mono:style=Italic:pixelsize=13
+
+! Fix font space
+URxvt.letterSpace: -1
+
+! scrollbar
+URxvt.scrollStyle:          rxvt
+URxvt.scrollBar:            false
+URxvt.scrollTtyOutput:      false
+URxvt.scrollWithBuffer:     true
+URxvt.scrollTtyKeypress:    true
+
+
+! perl extensions
+URxvt.perl-lib:             /home/siem/.config/urxvt/ext/
+URxvt.perl-ext-common:      default,font-size
+URxvt.matcher.button:       1
+URxvt.urlLauncher:          chromium-browser
+
+! Font-size extension
+URxvt.keysym.C-Up:          font-size:increase
+URxvt.keysym.C-Down:        font-size:decrease
+URxvt.keysym.C-S-Up:        font-size:incglobal
+URxvt.keysym.C-S-Down:      font-size:decglobal
+URxvt.keysym.C-0:           font-size:reset
+
+
+! Cursor
+URxvt.cursorBlink:          true
+URxvt.cursorColor:          #657b83
+URxvt.cursorUnderline:      false
+
+! Pointer
+URxvt.pointerBlank:   true
+
+! Modified dracula colors
+! special
+URxvt.foreground:   #f8f8f2
+URxvt.background:   #282a36
+
+! black
+URxvt.color0:       #232530
+URxvt.color8:       #4d4d4d
+
+! red
+URxvt.color1:       #ff5555
+URxvt.color9:       #ff6e67
+
+! green
+URxvt.color2:       #50fa7b
+URxvt.color10:      #5af78e
+
+! yellow
+URxvt.color3:       #f1fa8c
+URxvt.color11:      #f4f99d
+
+! blue
+URxvt.color4:       #5f5faf
+URxvt.color12:      #7272d2
+
+! magenta
+URxvt.color5:       #ff79c6
+URxvt.color13:      #ff92d0
+
+! cyan
+URxvt.color6:       #8be9fd
+URxvt.color14:      #9aedfe
+
+! white
+URxvt.color7:       #bfbfbf
+URxvt.color15:      #e6e6e6
+
+! ------------------------------------------------------------------------------
+! ROFI settings
+! ------------------------------------------------------------------------------
+
+! Launcher layout
+rofi.modi:                           window,run,ssh
+rofi.width:                          100
+rofi.lines:                          5
+rofi.columns:                        1
+rofi.font:                           Roboto Mono Medium for Powerline 18
+
+
+rofi.color-enabled: true
+rofi.color-window: argb:c6231f20, argb:3000000, argb:0000000
+rofi.color-normal: argb:3000000, argb:c6f7f4d5, argb:f000000, argb:c4f7f4d5, argb:c4231f20
+rofi.color-active: argb:c6f7f4d5, argb:c4231f20, argb:c4f7f4d5, argb:c6f7f4d5, argb:c6231f20
+rofi.color-urgent: argb:ccf7f4d5, argb:ccdc322f, argb:e000000, argb:ccdc322f, argb:cc000000
+
+
+! Screen positioning
+rofi.bw:                             0
+rofi.location:                       0
+rofi.padding:                        480
+rofi.yoffset:                        0
+rofi.xoffset:                        0
+
+! Miscellaneous
+rofi.fixed-num-lines:                false
+rofi.terminal:                       urxvt
+rofi.run-command:                    {cmd}
+rofi.eh:                             2
+rofi.m:                              0
+rofi.line-margin:                    2
+rofi.separator-style:                none
+rofi.hide-scrollbar:                 true
+rofi.fullscreen:                     false
+rofi.fake-transparency:              false
+rofi.dpi:                            -1
+
+!EOF
