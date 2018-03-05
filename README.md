@@ -18,16 +18,32 @@ To ensure XDG compliance environment variables should be set up to conform to th
 [[ -n "$LC_CTYPE" ]] || export LC_CTYPE="en_US.UTF-8"
 ```
 
-### Installing software
-The list below includes packages which are referenced or used in the various configuration files in this repository and create a working base install of the environment. All personal `$USER` applications have been omitted as they vary per system installation. Instead, these have been listed under the section 'Optional software packages' below. 
+### Enabling multilib repositories
+Several applications require 32-bit libraries. These can be retrieved after enabling the `multilib` repository in `/etc/pacman.conf`. 
+
+### Selecting the fastest mirror
+
 ```
-sudo apt install \
-   cmake compton curl dkms exuberant-ctags feh flake8 gvfs gvfs-backends i3 i3blocks i3lock    \
-   i3status imagemagick libssl-dev lxappearance numlockx pavucontrol policykit-1 pulseaudio    \
-   python-dev python-pip python3-dev python3-pip rofi rxvt-unicode-256color scrot thunar       \
-   thunar-volman tmux udisks2 x11-apps x11-session-utils x11-utils x11-xserver-utils xautolock \
-   xbacklight xfonts-base xinit xinput xorg xserver-xorg xserver-xorg-core                     \
-   xserver-xorg-input-synaptics xss-lock zsh
+sudo pacman -S --noconfirm --needed reflector
+sudo reflector -l 100 -f 50 --sort rate --threads 5 --verbose --save /tmp/mirrorlist.new
+rankmirrors -n 0 /tmp/mirrorlist.new > /tmp/mirrorlistsudo 
+cp /tmp/mirrorlist /etc/pacman.d && sudo pacman -Syu
+```
+
+### Install XOrg and video driver(s)
+
+```
+sudo pacman -S --noconfirm --needed \
+   xorg-server xorg-apps xorg-xinit xorg-twm xterm xf86-video-intel
+```
+
+### Install essential software
+The list below includes packages which are referenced or used in the various configuration files in this repository and create a working base install of the environment. All personal `$USER` applications have been omitted as they vary per system installation. Instead, these have been listed under the section 'Optional software packages' below. 
+
+```
+sudo pacman -S --noconfirm --needed \   
+   acpi acpid alsa-firmware alsa-plugins alsa-utils android-tools ansible arandr baobab blueberry bluez-firmware bluez-utils bmon bridge-utils cheese cifs-utils cmake compton cups cups-pdf curl dhclient dialog dkms docker dunst etckeeper feh ffmpeg file-roller firefox flake8 flashplugin ghostscript gksu gnome-keyring gparted gsfonts gst-plugins-bad gst-plugins-base gst-plugins-good gst-plugins-ugly gstreamer gvfs gvfs-mtp gvfs-nfs gvfs-smb hplip htop i3status imagemagick iperf iperf3 jre9-openjdk libcups libvirt linux-headers lm_sensors lsb-release lxappearance minicom mousetweaks mtr neovim net-tools networkmanager network-manager-applet nftables nmap numix-gtk-theme numlockx openconnect openssh openssl openvpn p7zip pavucontrol polkit powertop pulseaudio pulseaudio-alsa putty python python-pip python2 python2-pip ranger redshift remmina rofi ruby sane screen screenfetch scrot sshpass simple-scan sslscan xf86-input-libinput syncthing system-config-printer tcpdump thunar thunar-volman thunderbird tlp tlp-rdw tmux traceroute transmission-qt tree ttf-roboto udev udisks2 unrar unzip vagrant virt-manager virtualbox vlc wget whois wireshark-cli wireshark-common wireshark-qt x11-ssh-askpass xautolock xclip xdg-user-dirs xfce4-notes-plugin xss-lock zip zsh    
+
 ```
 In order to trigger `.zlogin` (and thus the following `.xinitrc`), `zsh` should be made the default login shell for the current user:
 ```
@@ -37,14 +53,16 @@ Additionally, `zsh` can be made XDG compliant by including the default XDG direc
 ```
 echo -e "\nif [[ -z "$XDG_CONFIG_HOME" ]]; then\n  export XDG_CONFIG_HOME="$HOME/.config/"\nfi\n\nif [[ -d "$XDG_CONFIG_HOME/zsh" ]]; then\n  export ZDOTDIR="$XDG_CONFIG_HOME/zsh/"\nfi" | sudo tee -a /etc/zsh/zshenv
 ```
-
-Neovim is currently not included in the default Ubuntu repositories but can be installed from `nvim`'s unstable PPA's:
+### Install AUR helper `pacaur` 
 ```
-sudo add-apt-repository -y ppa:neovim-ppa/unstable
-sudo apt-get update -y && sudo apt-get install -y neovim
+curl -Ls https://goo.gl/cF2iJy | bash
+```
+### Installing additional software
+```
+pacaur -S --noconfirm --noedit universal-ctags-git rxvt-unicode-patched arping-th ostinato solaar gnome-ssh-askpass2 rar font-manager hardcode-fixer-git dropbox foxitreader numix-icon-theme-git numix-circle-icon-theme-git neofetch pkgcacheclean slack-desktop spotify keepassxc-git davmail ttf-fantasque-sans-mono powerline-fonts-git ttf-font-awesome-4 gtk-theme-arc-git icaclient eve-ng-integration i3lock-color-git j4-dmenu-desktop i3blocks i3-gaps-next-git teamviewer remmina-plugin-teamviewer displaylink
 ```
 
-### Set up plugin manager(s)
+### Setting up plugin manager(s)
 `vim-plug` allows for leveraging `nvim`'s asynchronous behavior. `zsh` plugins are handled by `zplug` which is self-contained within `$XDG_CONFIG_HOME/zsh/.zshrc`.
 ```
 # vim-plug
@@ -52,30 +70,12 @@ curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 ```
 
-### Install custom fonts
-The fonts below are referenced in the `rofi`, `i3` and `rxvt-unicode` configuration files.
+### Enable services
 ```
-# Powerline fonts
-git clone https://github.com/powerline/fonts
-mkdir -p $XDG_DATA_HOME/fonts/ && chmod +x fonts/install.sh && sudo fonts/install.sh
-rm -rf ~/fonts/
-
-# FantasqueSansMono
-wget https://github.com/belluzj/fantasque-sans/releases/download/v1.7.1/FantasqueSansMono.tar.gz
-mkdir -p $XDG_DATA_HOME/fonts && tar -xzf FantasqueSansMono.tar.gz --wildcards '*.ttf' && mv ~/*.ttf $XDG_DATA_HOME/fonts/
-rm FantasqueSansMono.tar.gz
-
-# Roboto
-git clone https://github.com/google/fonts/
-mkdir -p $XDG_DATA_HOME/fonts && cp ~/fonts/apache/roboto/*.ttf $XDG_DATA_HOME/fonts
-rm -rf ~/fonts/
-
-# Font-Awesome
-git clone https://github.com/FortAwesome/Font-Awesome/
-mv ~/Font-Awesome/fonts/fontawesome-webfont.ttf $XDG_DATA_HOME/fonts/ && rm -rf ~/Font-Awesome/
-
-# Update font-cache
-fc-cache -f -v
+sudo systemctl enable NetworkManager.service
+sudo systemctl enable org.cups.cupsd.service
+sudo systemctl enable bluetooth.service
+sudo systemctl enable sshd.service
 ```
 
 ### Clone dotfiles into correct directories
@@ -130,10 +130,6 @@ Edit the default message when logging in from the console (`ttyX`).
 ```
 echo -e "Use of this system constitutes consent to monitoring. Monitoring may be\nconducted for the protection against improper or unauthorized use or access.\n\n" | sudo tee /etc/issue
 ```
-Prevent scripts in /etc/update-motd.d/ from executing to remove the default messages:
-```
-sudo chmod -x /etc/update-motd.d/*
-```
 
 #### Fixing audio popping on the Dell E7470
 The Dell E7470 suffers from occasional audio popping when running the 4.X kernel branch. As a workaround the loopback device can be disabled by running the command below and navigating to the specific device. 
@@ -147,57 +143,9 @@ By default Ubuntu performs dynamic naming of network interfaces. To revert to a 
 ```
 sed -i '/GRUB_CMDLINE_LINUX/{s/\"\"/\"net\.ifnames\=0\"/g;s/#//g}' /etc/default/grub
 ```
-
-### Optional software packages
-
-#### Environment themes
-Add the theme repositories:
-
-`numix-icon-theme` & `arc-theme`
-
-```
-wget -nv http://download.opensuse.org/repositories/home:Horst3180/xUbuntu_16.04/Release.key -O Release.key
-sudo apt-key add - < Release.key
-sudo sh -c "echo 'deb http://download.opensuse.org/repositories/home:/Horst3180/xUbuntu_16.04/ /' > /etc/apt/sources.list.d/arc-theme.list"
-sudo add-apt-repository -y ppa:numix/ppa
-sudo apt update && sudo apt install arc-theme numix-icon-theme
-```
-Note that themes still have to be applied with `lxappearance`.
-
-#### Workflow software packages
-Enable the partner repository in `/etc/apt/sources.list`:
-```
-sudo sed -i.bak "/^# deb .*partner/ s/^# //" /etc/apt/sources.list && sudo apt update
-```
-The software packages below add on to the base install to create a workable environment:
-```
-sudo snap install keepassxc
-sudo apt install \
-   adobe-flashplugin android-tools-adb android-tools-fastboot arandr arping bmon bridge-utils    \
-   cheese cifs-utils default-jre etckeeper ffmpeg file-roller firefox gnome-keyring gnupg2       \
-   gparted htop iperf iperf3 lm-sensors minicom mousetweaks mtr network-manager nftables         \
-   network-manager-gnome nmap numix-gtk-theme openconnect openvpn ostinato p7zip-full putty      \
-   powertop ranger redshift remmina remmina-plugin-rdp remmina-plugin-vnc screenfetch solaar     \
-   ssh-askpass ssh-askpass-gnome thunderbird tlp tlp-rdw traceroute transmission-gtk tree        \
-   tshark udev unrar unzip virt-manager virtualbox vlc whois wireshark wpasupplicant xfce4-notes
-```
+### Correcting permissions
 In order to run `minicom`, `pcap` without root permissions and allow device mounting in `virtualbox` the following groups should be added to the current user:
 
 ```
-sudo usermod -a -G dialout,wireshark,virtualbox $USER
-```
-
-The software packages below require manual installation:
-
-+ [`davmail`](http://davmail.sourceforge.net/download.html)
-+ [`syncthing`](https://apt.syncthing.net)
-+ [`hplip`](http://hplipopensource.com/hplip-web/downloads.html)
-+ [`spotify`](https://www.spotify.com/nl/download/linux/)
-+ [`teamviewer`](https://www.teamviewer.com/en/download/linux/)
-
-#### DisplayLink driver 
-The easiest way to install the DisplayLink driver for Debian based distributions is by using `/u/AdnanHodzic`'s install script:
-```
-git clone https://github.com/AdnanHodzic/displaylink-debian && cd displaylink-debian
-sudo ./displaylink-debian.sh
+sudo usermod -aG dialout,wireshark,virtualbox $USER
 ```
