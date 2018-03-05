@@ -1,12 +1,15 @@
 # :wrench: .cfg
+This repo contains a snapshot of my ([**@siemhermans**](https://twitter.com/siemhermans)) configuration files. This README provides sources for installing a base Arch Linux system and a step by step build instruction for converting the system into my preferred working environment.
 
-This is a **snapshot** of my ([**@siemhermans**](https://twitter.com/siemhermans)) configuration files. The description below provides a step by step manual for installing a working environment assuming a Ubuntu Server image is used. 
+# System installation
+[@HardenedArray](https://github.com/HardenedArray) has provided an excellent `gist` on installing an Arch Linux system with encrypted root and swap filesystems and UEFI-booting compatibility. I highly suggest following the steps outlined in this [**guide**](https://gist.github.com/HardenedArray/31915e3d73a4ae45adc0efa9ba458b07).
 
-# Installation steps
-The following steps set up the correct `env` variables, install essential software packages, plugin managers and fonts, install plugins for `zsh` and `nvim` and clone the dotfiles in this repository into the correct directories. Where possible, all configuration files follow the XDG Base Directory Specification. 
+
+# Environment setup
+The following steps set up the correct `env` variables, install essential software packages, plugin managers and fonts, install plugins for `zsh` and `nvim` and clone the dotfiles provided in this repository into the correct directories. Where possible, all configuration files follow the XDG Base Directory Specification. Parts of the software selection for setting up `i3` and `xorg` build on [@erikdubois](https://github.com/erikdubois/Archi3)' installation scripts.
 
 ### Defining `env` variables
-Define environment variables conforming to the XDG Base Directory Specification. Additonally, manually set the locale environment variables for installing plugins with `pip` (These variables are handled in `zshenv` later on):
+To ensure XDG compliance environment variables should be set up to conform to the XDG Base Directory Specification. Additonally, manually set the locale environment variables for installing plugins with `pip` (These variables are handled in `zshenv` later on):
 ```
 [[ -n "$XDG_CONFIG_HOME" ]] || export XDG_CONFIG_HOME=$HOME/.config
 [[ -n "$XDG_CACHE_HOME"  ]] || export XDG_CACHE_HOME=$HOME/.cache
