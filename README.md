@@ -88,7 +88,7 @@ echo -e "\nif [[ -z "$XDG_CONFIG_HOME" ]]; then\n  export XDG_CONFIG_HOME="$HOME
 ```
 # Official repositories
 sudo pacman -S --noconfirm --needed \ 
-	android-tools ansible arandr baobab bmon cheese compton docker file-roller firefox      \
+   android-tools ansible arandr baobab bmon cheese compton docker file-roller firefox      \
    flake8 flashplugin gparted hplip htop jre9-openjdk libvirt lm_sensors lxappearance      \
    mtr nftables nmap numix-gtk-theme openconnect openvpn powertop putty ranger redshift    \
    remmina screen screenfetch sslscan syncthing tcpdump thunar thunar-volman thunderbird   \
@@ -97,7 +97,7 @@ sudo pacman -S --noconfirm --needed \
 
 # AUR
 sudo trizen -S --noconfirm --noedit \
-  	arping-th davmail displaylink dropbox eve-ng-integration font-manager foxitreader       \
+   arping-th davmail displaylink dropbox eve-ng-integration font-manager foxitreader       \
    gnome-ssh-askpass2 gtk-theme-arc-git hardcode-fixer-git icaclient keepassxc-git         \
    neofetch numix-circle-icon-theme-git numix-icon-theme-git ostinato pkgcacheclean        \
    powerline-fonts-git rar remmina-plugin-teamviewer rxvt-unicode-patched slack-desktop    \
@@ -113,6 +113,7 @@ sudo usermod -aG wireshark,vboxusers,libvirtd,docker $USER
 
 ### Setting up plugin manager(s)
 `vim-plug` allows for leveraging `nvim`'s asynchronous behavior. `zsh` plugins are handled by `zplug` which is self-contained within `$XDG_CONFIG_HOME/zsh/.zshrc`.
+
 ```bash
 # vim-plug
 curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs \
@@ -120,7 +121,7 @@ curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs \
 ```
 
 ### Clone dotfiles into correct directories
-This method is courtesy of `/u/StreakyCobra` and is explained in more detail in the [Atlassian Developer blog]( https://developer.atlassian.com/blog/2016/02/best-way-to-store-dotfiles-git-bare-repo/).
+My preferred method of keeping dotfiles is courtesy of `/u/StreakyCobra` and is explained in more detail in the [Atlassian Developer blog]( https://developer.atlassian.com/blog/2016/02/best-way-to-store-dotfiles-git-bare-repo/). It involves storing a Git bare repository in a "side" folder and setting up a specific `git` alias that directs commands to that repository.
 
 ```bash
 # Set up cfg alias and clone the repo
@@ -136,10 +137,11 @@ xargs -I{} mv {} .config-backup/{}
 cfg checkout
 cfg config --local status.showUntrackedFiles no
 ```
-Future configuration files can be added or removed by leveraging the `cfg` alias.
 
-### Install plugins
-`nvim` plugins can be installed directly from the command line with the command below. The `zsh` plugins should be automatically installed by `zplug` the first time `zshrc` is read. `urxvt` plugins are handled directly in `$XDG_CONFIG_HOME/X11/Xresources` and are included in the repository. 
+As `cfg` is set up as a `git` alias, future configuration files can be added or removed by leveraging standard `git` mutation commands.
+
+#### Install shell and editor plugins
+The `nvim` plugins as defined in the `init.vim` configuration file can be installed directly from the command line with the command below. The `zsh` plugins should be automatically installed by `zplug` the first time `zshrc` is read. `urxvt` plugins are handled directly in `$XDG_CONFIG_HOME/X11/Xresources` and are included in the repository. 
 
 ```bash
 # Install Python related dependencies for Neovim:
@@ -153,20 +155,52 @@ mkdir $XDG_CONFIG_HOME/zsh/plugins/    # Create local plugin repository
 zsh && zplug install
 ```
 
-### Starting default services
+#### Starting default services
 ```bash
-sudo systemctl enable NetworkManager.service
-sudo systemctl enable org.cups.cupsd.service
 sudo systemctl enable bluetooth.service
+sudo systemctl enable dhcpd.service
+sudo systemctl enable docker.service
+sudo systemctl enable libvirtd.service
+sudo systemctl enable NetworkManager.service
+sudo systemctl enable nftables.service
+sudo systemctl enable org.cups.cupsd.service
 sudo systemctl enable sshd.service
+sudo systemctl enable tlp.service
+sudo systemctl enable tlp-sleep.service
+
+# Mask these services due to TLP interference
+sudo systemctl mask systemd-rfkill.service
+sudo systemctl mask systemd-rfkill.socket
 ```
+
+### Setting a strict firewall policy
+TODO: Add Fail2Ban
+TODO: Add nftables policy
+TODO: Add MAC randomizer
+TODO: Add hostname randomizer
+TODO: Add Arch hardening portion
 
 ### Miscellaneous configuration
 
 #### Power button behavior
-By modifying the Power Button behavior in `logind`, i3 can handle poweroff behavior. In this instance, the power button is handled in `$mode_system` in i3. Note that this modification can only be performed as a privileged user.
+By default, hitting the power button will instantly trigger a `poweroff` event in `systemd-logind`. As I personally deploy this environment on a laptop I prefer handling this power button behavior in `i3`. In this instance, the power button is handled in `$mode_system` in `$XDG_CONFIG_HOME/i3/config` which triggers an option menu.
+
 ```bash
 sudo sed -i '/HandlePowerKey/{s/poweroff/ignore/g;s/#//g}' /etc/systemd/logind.conf
+```
+
+#### Fixing audio popping on the Dell E7470
+The Dell E7XXX series suffers from occasional audio popping when running the 4.X kernel branch. This issue can be resolved by disabling the loopback audio device by running the command below and navigating to the specific device. (Un)muting can be done by using the <kbd>&uarr;</kbd> and  <kbd>&darr;</kbd> buttons.
+
+```bash
+alsamixer -c0
+```
+
+#### Reverting to normal interface names
+By default `systemd-networkd` performs ['predictable' naming](https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/) of network interfaces for security considerations. As this guide mainly concerns a laptop environment where the amount of available interfaces is generally static I personally prefer reverting back to the classic more human-readable scheme of `'ethX'` and `'wlanX'`. This can be enforced by passing `net.ifnames=0` on the kernel command line in `/etc/default/grub`:
+
+```bash
+sed -i '/GRUB_CMDLINE_LINUX/{s/\"\"/\"net\.ifnames\=0\"/g;s/#//g}' /etc/default/grub
 ```
 
 #### Modifying banner files
@@ -175,15 +209,3 @@ Edit the default message when logging in from the console (`ttyX`).
 echo -e "Use of this system constitutes consent to monitoring. Monitoring may be\nconducted for the protection against improper or unauthorized use or access.\n\n" | sudo tee /etc/issue
 ```
 
-#### Fixing audio popping on the Dell E7470
-The Dell E7470 suffers from occasional audio popping when running the 4.X kernel branch. As a workaround the loopback device can be disabled by running the command below and navigating to the specific device. 
-```bash
-alsamixer -c0
-```
-
-#### Reverting to normal interface names
-By default `systemd-networkd` performs dynamic naming of network interfaces. To revert to a more human-readable scheme of `'ethX'` and `'wlanX'` the following line in `/etc/default/grub` can be changed:
-
-```bash
-sed -i '/GRUB_CMDLINE_LINUX/{s/\"\"/\"net\.ifnames\=0\"/g;s/#//g}' /etc/default/grub
-```
