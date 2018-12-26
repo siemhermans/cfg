@@ -1,21 +1,138 @@
 # :wrench: .cfg
-This repo contains a snapshot of my ([**@siemhermans**](https://twitter.com/siemhermans)) configuration files and a guide for setting up a minimal Arch Linux system based around the `i3` window manager. This **README** provides sources for installing a base system and a step by step build instruction for converting that system into my personally preferred working environment.
+This repo contains a snapshot of my ([**@siemhermans**](https://www.linkedin.com/in/siemhermans/)) configuration files and a guide for setting up a minimal Arch Linux system based around the `i3` window manager. This **README** provides sources for installing a base system and a step by step build instruction for converting that system into my personally preferred working environment.
 
 ## Base system installation
-[@HardenedArray](https://github.com/HardenedArray) has provided an excellent `gist` on installing an Arch Linux system with UEFI-booting compatibility and encrypted root and swap filesystems. I highly suggest following the steps outlined in this [**guide**](https://gist.github.com/HardenedArray/31915e3d73a4ae45adc0efa9ba458b07) as the following sections pick up where the user is left off after installing.
+The installation steps below lend heavily from [@HardenedArray](https://github.com/HardenedArray)'s excellent [`gist`](https://gist.github.com/HardenedArray/31915e3d73a4ae45adc0efa9ba458b07) on installing an Arch Linux system with UEFI-booting compatibility and encrypted boot, root and swap filesystems. I highly suggest following the steps outlined in this  as the following sections pick up where the user is left off after installing.
+
+#### Setting up the harddisk
+This guide assumes a machine -a laptop more specifically- with a single, zeroed-out harddisk which is set up as follows through `gdisk`: 
+```
+/dev/sdXX = 100 MiB EFI partition      # 0xEF00
+/dev/sdXY = 250 MiB Boot partition     # 0x8300
+/dev/sdXZ = Remainder of the harddisk  # 0x8300  
+```
+As indicated by [Rod Smith](https://askubuntu.com/a/717250), the hex codes for partitions in a GPT-scheme shouldn't matter all that much except for the EFI partition. Arguably `/dev/sdXZ` could also be `0x8e00` (LVM partition) but it shouldn't matter either way. After creating the partitions, the filesystems for both the EFI and Boot partition should be set:
+
+```
+mkfs.vfat -F 32 /dev/sdXX
+mkfs.ext4 /dev/sdXY
+```
+
+`/dev/sdXZ` is set up with an [LVM on LUKS](https://wiki.archlinux.org/index.php/Dm-crypt/Encrypting_an_entire_system#LVM_on_LUKS) configuration through `cryptsetup`. Note that 'safeguard' is an arbitrary name for the encrypted volume:  
+
+```
+cryptsetup -c aes-xts-plain64 -h sha512 -s 512 --use-random luksFormat /dev/sdXZ
+cryptsetup luksOpen /dev/sdXZ safeguard
+```
+
+
+```
+pvcreate /dev/mapper/safeguard
+vgcreate vg-arch /dev/mapper/safeguard
+lvcreate -L +512M vg-arch -n swap
+lvcreate -l +100%FREE vg-arch -n root
+```
+
+```
+mkswap /dev/mapper/vg--arch-swap
+mkfs.btrfs /dev/mapper/vg--arch-root  
+```
+
+
+#### Mounting the new system 
+```
+mount /dev/mapper/vg--arch-root /mnt
+swapon /dev/mapper/vg--arch-swap
+mkdir /mnt/boot
+mount /dev/sdXY /mnt/boot
+mkdir /mnt/boot/efi
+mount /dev/sdXX /mnt/boot/efi
+```
+
+```
+pacstrap /mnt base base-devel grub-efi-x86_64 efibootmgr dialog wpa_supplicant
+```
+```
+genfstab -U /mnt >> /mnt/etc/fstab 
+```
+
+```
+arch-chroot /mnt /bin/bash
+```
+
+#### Setting up miscellaneous stuff
+
+```
+ln -s /usr/share/zoneinfo/CET /etc/localtime
+hwclock --systohc --utc
+```
+
+```
+echo laptop > /etc/hostname
+```
+
+```
+/etc/locale.gen, uncomment 'en_US.UTF-8 UTF-8'
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+locale-gen
+```
+
+```
+passwd
+useradd -m -G wheel -s /bin/bash siem
+passwd siem
+```
+
+#### Configuring `mkinitcpio` and `grub2`
+
+```
+vi /etc/mkinitcpio.conf
+
+HOOKS=(base systemd autodetect keyboard modconf block sd-encrypt sd-lvm2 filesystems fsck)
+```
+
+Generate init.rd
+```
+mkinitcpio -p linux
+```
+
+Install grub2
+```
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ArchLinux
+```
+```
+GRUB_CMDLINE_LINUX="cryptdevice=/dev/sdXZ:SecureGoodness resume=/dev/mapper/Arch-swap"
+rd.luks.name=device-UUID=cryptlvm root=/dev/MyVolGroup/root
+```
+
+
+#### Fix LVM issues
+https://unix.stackexchange.com/questions/105389/arch-grub-asking-for-run-lvm-lvmetad-socket-on-a-non-lvm-disk
+
+host:
+```
+mkdir /mnt/hostrun
+mount --bind /run /mnt/hostrun
+
+arch-chroot /mnt /bin/bash
+mkdir /run/lvm
+mount --bind /hostrun/lvm /run/lvm
+```
+
+```
+grub-mkconfig -o /boot/grub/grub.cfg
+```
 
 ## Building a working environment
 The following steps set up the correct `env` variables, install essential software packages, plugin managers and fonts, install plugins for `zsh` and `nvim` and clone the dotfiles provided in this repository into the correct directories. Where possible, all configuration files follow the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-0.6.html). Parts of the software selection for setting up `i3` and `xorg` build on [@erikdubois](https://github.com/erikdubois/Archi3)' installation scripts.
 
 #### Defining `env` variables
-To ensure XDG compliance during the installation process, environment variables should temporarily be set up to conform to the XDG specification. These variables will be handled in `/etc/zsh/zshenv` in the final setup, causing them to be loaded when `zsh` starts. As `zsh` will be set as the default shell for the main user, this in turn happens when `$USER` logs in. Additonally, to be able to install Python packages with `pip`, the locale environment variables should be set: 
+To ensure XDG compliance during the installation process, environment variables should temporarily be set up to conform to the XDG specification. These variables will be handled in `/etc/zsh/zshenv` in the final setup, causing them to be loaded when `zsh` starts. As `zsh` will be set as the default shell for the main user, this in turn happens when `$USER` logs in.
 
 ```bash
 [[ -n "$XDG_CONFIG_HOME" ]] || export XDG_CONFIG_HOME=$HOME/.config
 [[ -n "$XDG_CACHE_HOME"  ]] || export XDG_CACHE_HOME=$HOME/.cache
 [[ -n "$XDG_DATA_HOME"   ]] || export XDG_DATA_HOME=$HOME/.local/share
-[[ -n "$LC_ALL" ]] || export LC_ALL="en_US.UTF-8"
-[[ -n "$LC_CTYPE" ]] || export LC_CTYPE="en_US.UTF-8"
 ```
 
 #### Selecting the fastest mirror *(Optional)*
