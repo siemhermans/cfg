@@ -135,7 +135,7 @@ In /etc/lvm/lvm.conf, enable issue_discards=1 option.
 
 sudo systemctl enable fstrim.timer
 
-
+Check whether swap works with `swapon --output-all` and `ls -l /dev/mapper/`
 
 Lastly, add rd.luks.options=discard in your kernel boot options
 
