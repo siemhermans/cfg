@@ -83,45 +83,61 @@ useradd -m -G wheel -s /bin/bash siem
 passwd siem
 ```
 
-#### Configuring `mkinitcpio` and `grub2`
-
+#### Configuring `mkinitcpio`
+https://wiki.archlinux.org/index.php/mkinitcpio#Common_hooks
 ```
 vi /etc/mkinitcpio.conf
 
-HOOKS=(base systemd autodetect keyboard modconf block sd-encrypt sd-lvm2 filesystems fsck)
+HOOKS=(base systemd autodetect keyboard sd-vconsole modconf block sd-encrypt sd-lvm2 filesystems fsck)
 ```
+/etc/vconsole.conf
+KEYMAP=us
 
 Generate init.rd
 ```
 mkinitcpio -p linux
 ```
 
-Install grub2
-```
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ArchLinux
-```
-```
-GRUB_CMDLINE_LINUX="cryptdevice=/dev/sdXZ:SecureGoodness resume=/dev/mapper/Arch-swap"
-rd.luks.name=device-UUID=cryptlvm root=/dev/MyVolGroup/root
-```
+#### Passthrough LVM information
+In order to allow the 'guest' (the system being installed) to succesfully read the created LVM physical volumes and volume groups, the `lvmetad.socket` and `lvmpolld.socket` residing in the `/run` directory of the 'host' should be made available to the 'guest'. Otherwise, `grub-mkconfig` and `grub-install` will loop on the notion that the devices [have not been initialized](https://unix.stackexchange.com/a/152277) in the `udev` database.  
 
-
-#### Fix LVM issues
-https://unix.stackexchange.com/questions/105389/arch-grub-asking-for-run-lvm-lvmetad-socket-on-a-non-lvm-disk
-
-host:
+On the 'host':
 ```
 mkdir /mnt/hostrun
 mount --bind /run /mnt/hostrun
-
+```
+On the 'guest':
+```
 arch-chroot /mnt /bin/bash
 mkdir /run/lvm
 mount --bind /hostrun/lvm /run/lvm
 ```
 
+#### Installing the bootloader
+```
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ArchLinux
+```
+
+```
+GRUB_CMDLINE_LINUX="rd.luks.name=<sdaXZ_UUID>=<name_of_encrypted_device> root=/dev/<volume_group_name>/root rd.luks.option=discard"
+GRUB_CMDLINE_LINUX="rd.luks.name=<UUID>=safeguard root=/dev/MyVolGroup/root rd.luks.option=discard"
+```
+
 ```
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
+
+You will need three things:
+
+A filesystem that supports discard (I am using XFS).
+
+In /etc/lvm/lvm.conf, enable issue_discards=1 option.
+
+sudo systemctl enable fstrim.timer
+
+
+
+Lastly, add rd.luks.options=discard in your kernel boot options
 
 ## Building a working environment
 The following steps set up the correct `env` variables, install essential software packages, plugin managers and fonts, install plugins for `zsh` and `nvim` and clone the dotfiles provided in this repository into the correct directories. Where possible, all configuration files follow the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-0.6.html). Parts of the software selection for setting up `i3` and `xorg` build on [@erikdubois](https://github.com/erikdubois/Archi3)' installation scripts.
@@ -158,12 +174,13 @@ sudo pacman -Syu
 ```
 
 #### Installing an AUR helper
-Some of the packages related to `i3` are only available in the Arch User Repository (AUR). In order to take the strain out of manually keeping these packages up to date we will be installing an AUR helper. Although these helpers come in many shapes and forms I've settled on `trizen` which effectively functions as a drop-in replacement for the now deprecated `pacaur`.
+Some of the packages related to `i3` are only available through the [Arch User Repository (AUR)](https://aur.archlinux.org/). In order to take the strain out of manually keeping these packages up to date we will be installing an [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). Although these helpers come in many shapes and forms I've settled on [`yay`](https://github.com/Jguer/yay) which effectively functions as a drop-in replacement for the now deprecated `pacaur`.
 
 ```bash
 mkdir `$XDG_CONFIG_HOME/git/`
-git clone https://aur.archlinux.org/trizen.git $!
+git clone https://aur.archlinux.org/yay.git $!
 cd `$XDG_CONFIG_HOME/git/` && makepkg -si --noconfirm
+yay -S yay
 ```
 
 #### Installing essential utilities
@@ -184,7 +201,7 @@ sudo pacman -S --noconfirm --needed \
    xorg-apps xorg-server xorg-twm xorg-xinit xss-lock xterm zip zsh 
 
 # AUR
-sudo trizen -S --noconfirm --noedit \
+sudo yay -S --noconfirm --noedit \
    i3blocks i3-gaps-next-git i3lock-color-git j4-dmenu-desktop rxvt-unicode-patched
 ```
 
@@ -213,7 +230,7 @@ sudo pacman -S --noconfirm --needed \
    wireshark-cli wireshark-common wireshark-qt xfce4-notes-plugin
 
 # AUR
-sudo trizen -S --noconfirm --noedit \
+sudo yay -S --noconfirm --noedit \
    arping-th davmail displaylink dropbox eve-ng-integration font-manager foxitreader       \
    gnome-ssh-askpass2 gtk-theme-arc-git hardcode-fixer-git icaclient keepassxc-git         \
    neofetch numix-circle-icon-theme-git numix-icon-theme-git ostinato pkgcacheclean        \
